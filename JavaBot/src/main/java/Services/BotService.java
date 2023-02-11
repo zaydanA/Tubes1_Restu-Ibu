@@ -104,7 +104,7 @@ public class BotService {
             if (targetIsPlayer)
             {
                 System.out.println("Firing Torpedoes at target");
-                playerAction.action = PlayerActions.FIRETORPEDOES;
+                // playerAction.action = PlayerActions.FIRETORPEDOES;
             }
             
             System.out.println("TEST BOT ACTION : " + playerAction.action + " : " + playerAction.heading);
@@ -144,43 +144,54 @@ public class BotService {
     private int resolveNewTarget()
     {
         int heading;
+        double sum, sum1=0, minsum;
+        int idx=0, idxfix=0;
         var nearestFood = gameState.getGameObjects().stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD).sorted(Comparator.comparing(item -> getDistanceBetween(bot, item))).collect(Collectors.toList());
         var nearestPlayer = gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
+        // var test = nearestFood.get(0);
 
-        // if(!nearestPlayer.isEmpty()){
-        //     var direction2NearestPlayer = getHeadingBetween(nearestPlayer.get(0));
-        //     System.out.println(direction2NearestPlayer);
-        //     System.out.println("PEMBATAS PLAYER");
-        // }
-        // if(!nearestFood.isEmpty()){
-        //     var direction2NearestFood = getHeadingBetween(nearestFood.get(0));
-        //     System.out.println(direction2NearestFood);
-        //     System.out.println("PEMBATAS FOOD");
-        // }
-        // var direction2NearestPlayer = nearestPlayer.isEmpty() ? null : getHeadingBetween(nearestPlayer.get(0));
-        // var direction2NearestFood = nearestFood.isEmpty() ? null : getHeadingBetween(nearestFood.get(0));
+        for (int i=1; i<nearestFood.size(); i++){
+            sum1 += getDistanceBetween(nearestFood.get(0), nearestFood.get(i));
+        }
+
+        minsum = sum1;
+        
+        for(int i=0; i<nearestFood.size(); i++){
+            sum = 0;
+            for(int j= 0; j<nearestFood.size(); j++){
+                if (i != j){
+                    sum += getDistanceBetween(nearestFood.get(i), nearestFood.get(j));;
+                    idx = i;
+                }
+            }
+            if(sum < minsum){
+                minsum = sum;
+                idxfix = idx;
+            }
+        }
+
         if(nearestPlayer.isEmpty()){
             System.out.println("Wa a a a");
         }
         var direction2NearestPlayer = getHeadingBetween(nearestPlayer.get(0));
         
-        var direction2NearestFood = getHeadingBetween(nearestFood.get(0));
+        var direction2NearestFood = getHeadingBetween(nearestFood.get(idxfix));
         
         
-        if(nearestPlayer.get(0).getSize() > bot.getSize()){
+        if(nearestPlayer.get(0).getSize() >= bot.getSize()){
             System.out.println("TEST BOT KABUR");
-            heading = GetAttackerResolution(bot, nearestPlayer.get(0), nearestFood.get(0));
+            heading = GetAttackerResolution(bot, nearestPlayer.get(0), nearestFood.get(idxfix));
             targetIsPlayer = false;
         }
         else if (nearestPlayer.get(0).getSize() < bot.getSize()){
-            heading = direction2NearestPlayer;
-            target = nearestPlayer.get(0);
+            heading = direction2NearestFood;
+            target = nearestFood.get(0);
             targetIsPlayer = true;
             System.out.println("TEST BOT CHASING SMALLER PLAYER");
         }
         else if(nearestFood.get(0) != null){
             heading = direction2NearestFood;
-            target = nearestFood.get(0);
+            target = nearestFood.get(idxfix);
             targetIsPlayer = false;
             System.out.println("TEST BOT GOING FOR FEEDING");
         }
@@ -199,12 +210,12 @@ public class BotService {
     }
 
 
-    private int GetAttackerResolution(GameObject bot, GameObject attacker, GameObject closestFood)
+    private int GetAttackerResolution(GameObject _bot, GameObject attacker, GameObject closestFood)
     {
         if(closestFood == null){
-            return GetOppositeDirection(bot, attacker);
+            return GetOppositeDirection(_bot, attacker);
         }
-        var distance2Attacker = getDistanceBetween(bot, attacker);
+        var distance2Attacker = getDistanceBetween(_bot, attacker);
         var distanceBetweenAttackerAndFood = getDistanceBetween(attacker, closestFood);
 
         if(distance2Attacker > attacker.getSpeed() && distanceBetweenAttackerAndFood > distance2Attacker){
@@ -213,7 +224,7 @@ public class BotService {
         }
         else{
             System.out.println("TEST BOT RUNNING");
-            return GetOppositeDirection(bot, attacker);
+            return GetOppositeDirection(_bot, attacker);
         }
     }
     private int GetOppositeDirection(GameObject gameObject1, GameObject gameObject2)
