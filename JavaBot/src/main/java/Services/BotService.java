@@ -144,54 +144,73 @@ public class BotService {
     private int resolveNewTarget()
     {
         int heading;
-        double sum, sum1=0, minsum;
-        int idx=0, idxfix=0;
+        List<GameObject> nearestFood2;
         var nearestFood = gameState.getGameObjects().stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD).sorted(Comparator.comparing(item -> getDistanceBetween(bot, item))).collect(Collectors.toList());
+        // var nearestFood1 = gameState.getGameObjects().stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD).collect(Collectors.toList());
         var nearestPlayer = gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
-        // var test = nearestFood.get(0);
 
-        for (int i=1; i<nearestFood.size(); i++){
-            sum1 += getDistanceBetween(nearestFood.get(0), nearestFood.get(i));
-        }
-
-        minsum = sum1;
+        // if(!nearestPlayer.isEmpty()){
+        //     var direction2NearestPlayer = getHeadingBetween(nearestPlayer.get(0));
+        //     System.out.println(direction2NearestPlayer);
+        //     System.out.println("PEMBATAS PLAYER");
+        // }
+        // if(!nearestFood.isEmpty()){
+        //     var direction2NearestFood = getHeadingBetween(nearestFood.get(0));
+        //     System.out.println(direction2NearestFood);
+        //     System.out.println("PEMBATAS FOOD");
+        // }
+        // var direction2NearestPlayer = nearestPlayer.isEmpty() ? null : getHeadingBetween(nearestPlayer.get(0));
+        // var direction2NearestFood = nearestFood.isEmpty() ? null : getHeadingBetween(nearestFood.get(0));
         
-        for(int i=0; i<nearestFood.size(); i++){
-            sum = 0;
-            for(int j= 0; j<nearestFood.size(); j++){
-                if (i != j){
-                    sum += getDistanceBetween(nearestFood.get(i), nearestFood.get(j));;
-                    idx = i;
-                }
-            }
-            if(sum < minsum){
-                minsum = sum;
-                idxfix = idx;
-            }
-        }
+        // for(int i=0; i<nearestFood1.size(); i++){
+        //     nearestFood2 = gameState.getGameObjects().stream().filter(item2 -> item2.getGameObjectType() == ObjectTypes.FOOD).sorted(Comparator.comparing(item2 -> getDistanceBetween(nearestFood1.get(i), item2))).collect(Collectors.toList());
+
+        //     for(int j=0; j<nearestFood2.size(); j++){
+                
+        //     }
+
+        // }
+
+
 
         if(nearestPlayer.isEmpty()){
             System.out.println("Wa a a a");
         }
         var direction2NearestPlayer = getHeadingBetween(nearestPlayer.get(0));
         
-        var direction2NearestFood = getHeadingBetween(nearestFood.get(idxfix));
+        var direction2NearestFood = getHeadingBetween(nearestFood.get(0));
         
         
-        if(nearestPlayer.get(0).getSize() >= bot.getSize()){
-            System.out.println("TEST BOT KABUR");
-            heading = GetAttackerResolution(bot, nearestPlayer.get(0), nearestFood.get(idxfix));
-            targetIsPlayer = false;
+        if(nearestPlayer.get(0).getSize() > bot.getSize()){
+            if(getDistanceBetween(target, bot) < (24*nearestPlayer.get(0).getSize())){
+                System.out.println("TEST BOT KABUR");
+                heading = GetOppositeDirection(target, bot);
+                // heading = direction2NearestFood;
+                targetIsPlayer = false;
+            } else {
+                heading = direction2NearestFood;
+                target = nearestFood.get(0);
+                targetIsPlayer = false;
+                System.out.println("TEST BOT GOING FOR FEEDING");
+            }
+            
         }
         else if (nearestPlayer.get(0).getSize() < bot.getSize()){
-            heading = direction2NearestFood;
-            target = nearestFood.get(0);
-            targetIsPlayer = true;
-            System.out.println("TEST BOT CHASING SMALLER PLAYER");
+            if(getDistanceBetween(target, bot) <= (3*bot.getSize())){
+                heading = direction2NearestPlayer;
+                target = nearestPlayer.get(0);
+                targetIsPlayer = true;
+                System.out.println("TEST BOT CHASING SMALLER PLAYER");
+            }else {
+                heading = direction2NearestFood;
+                target = nearestFood.get(0);
+                targetIsPlayer = false;
+                System.out.println("TEST BOT GOING FOR FEEDING");
+            }
         }
         else if(nearestFood.get(0) != null){
             heading = direction2NearestFood;
-            target = nearestFood.get(idxfix);
+            target = nearestFood.get(0);
             targetIsPlayer = false;
             System.out.println("TEST BOT GOING FOR FEEDING");
         }
@@ -203,19 +222,19 @@ public class BotService {
         }
 
         if(target == worldCenter){
-            heading = direction2NearestPlayer;
+            heading = direction2NearestFood;
         }
 
         return heading;
     }
 
 
-    private int GetAttackerResolution(GameObject _bot, GameObject attacker, GameObject closestFood)
+    private int GetAttackerResolution(GameObject bot, GameObject attacker, GameObject closestFood)
     {
         if(closestFood == null){
-            return GetOppositeDirection(_bot, attacker);
+            return GetOppositeDirection(bot, attacker);
         }
-        var distance2Attacker = getDistanceBetween(_bot, attacker);
+        var distance2Attacker = getDistanceBetween(bot, attacker);
         var distanceBetweenAttackerAndFood = getDistanceBetween(attacker, closestFood);
 
         if(distance2Attacker > attacker.getSpeed() && distanceBetweenAttackerAndFood > distance2Attacker){
@@ -224,7 +243,7 @@ public class BotService {
         }
         else{
             System.out.println("TEST BOT RUNNING");
-            return GetOppositeDirection(_bot, attacker);
+            return GetOppositeDirection(bot, attacker);
         }
     }
     private int GetOppositeDirection(GameObject gameObject1, GameObject gameObject2)
