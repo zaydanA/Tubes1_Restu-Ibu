@@ -14,6 +14,8 @@ public class BotService {
     private GameObject target;
     private boolean targetIsPlayer = false; 
     private GameObject worldCenter;
+    private boolean udah=false;
+    private int count=0;
 
 
     public BotService() {
@@ -102,9 +104,10 @@ public class BotService {
 
             if (targetIsPlayer)
             {
-                System.out.println("Firing Torpedoes at target");
-                // playerAction.action = PlayerActions.FIRETORPEDOES;
+                System.out.println("FIRING TORPEDOES AT TARGET");
+                playerAction.action = PlayerActions.FIRETORPEDOES;
             }
+            System.out.println("INI HEADING : " + heading);
             playerAction.heading = heading;
             System.out.println("TEST BOT ACTION : " + playerAction.action + " : " + playerAction.heading);
             this.playerAction = playerAction;
@@ -140,8 +143,16 @@ public class BotService {
         return (int) (v * (180 / Math.PI));
     }
 
-    private int toDegrees2(double v) {
-        return (int) (v * (180 / Math.PI) + 90);
+    private int toDegrees2(double v, boolean p) {
+        System.out.println("COUNT : " + count);
+        count = 0;
+        if(p){
+            return (int) (v * (180 / Math.PI) - 90);    
+        }
+        else{
+            System.out.println("COUNT : " + 0);
+            return toDegrees(v);
+        }
     }
 
     private int resolveNewTarget()
@@ -176,7 +187,7 @@ public class BotService {
 
         // }
 
-
+            
 
         if(nearestPlayer.isEmpty()){
             System.out.println("Wa a a a");
@@ -194,17 +205,24 @@ public class BotService {
         if(getDistanceBetween(fixfood, bot) < getDistanceBetween(neareestGasCloud.get(0), bot)){
 
             //bot kita lebih kecil
-            if(nearestPlayer.get(0).getSize() > bot.getSize()){
+            if(nearestPlayer.get(0).getSize() >= bot.getSize()){
                 System.out.println("=====");
                 System.out.println(("UKURAN TARGET : " + nearestPlayer.get(0).getSize()));
                 System.out.println(("UKURAN BOT : " + bot.getSize()));
                 System.out.println(("JARAK TARGET DENGAN TEST : " + getDistanceBetween(nearestPlayer.get(0), bot)));
                 System.out.println("=====");
-                if(getDistanceBetween(nearestPlayer.get(0), bot) < (2*nearestPlayer.get(0).getSize())){
+                
+                if(getDistanceBetween(nearestPlayer.get(0), bot) < (8*bot.getSize())){
+                    udah = false;
                     System.out.println("TEST BOT KABUR");
                     heading = GetOppositeDirection(nearestPlayer.get(0), bot);
+                    target = fixfood;
+                    
+
                     // heading = direction2NearestFood;
-                    targetIsPlayer = false;
+                        targetIsPlayer = false;
+                    System.out.println("INI OPPOSITE DIKEJAR" + heading);
+                    count++;
                 }
                 else {
                     heading = getHeadingBetween(fixfood);
@@ -214,18 +232,26 @@ public class BotService {
                 }
                 
             }
+            
             //bot kita lebih gede
-            else if (3*nearestPlayer.get(0).getSize() < bot.getSize()){
-                if(getDistanceBetween(target, bot) < (3*bot.getSize())){
-                    heading = direction2NearestPlayer;
-                    target = nearestPlayer.get(0);
-                    targetIsPlayer = true;
-                    System.out.println("TEST BOT CHASING SMALLER PLAYER");
-                }else {
-                    heading = getHeadingBetween(fixfood);
-                    target = fixfood;
-                    targetIsPlayer = false;
-                    System.out.println("TEST BOT GOING FOR FEEDING");
+            else if (2*nearestPlayer.get(0).getSize() < bot.getSize()){
+                udah = false;
+                if(getDistanceBetween(neareestGasCloud.get(0), bot) < 4*bot.getSize()){
+                    heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
+                    System.out.println("TEST BOT CHASING TARGET BUT GAS CLOUD");
+                }
+                else{
+                    if(getDistanceBetween(target, bot) < (3*bot.getSize())){
+                        heading = direction2NearestPlayer;
+                        target = nearestPlayer.get(0);
+                        targetIsPlayer = true;
+                        System.out.println("TEST BOT CHASING SMALLER PLAYER");
+                    }else {
+                        heading = getHeadingBetween(fixfood);
+                        target = fixfood;
+                        targetIsPlayer = false;
+                        System.out.println("TEST BOT GOING FOR FEEDING");
+                    }
                 }
             }
             else if(fixfood != null){
@@ -240,23 +266,28 @@ public class BotService {
                 targetIsPlayer = false;
                 System.out.println("TEST BOT COULDNT FIND ANYTHING");
             }
-        } else{
-            if (getDistanceBetween(nearestPlayer.get(0), bot) < (3*nearestPlayer.get(0).getSize())){
-                heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
+        } else{//ini tiati
+            if (getDistanceBetween(nearestPlayer.get(0), bot) < (8*bot.getSize())){
+                heading = GetOppositeDirection2(nearestPlayer.get(0), bot);
                 target = fixfood;
-                System.out.println("TEST NGEHINDAR GAS CLOUD ");
-            } else{
+                System.out.println("ADA GAS CLOUD TAPI ADA TARGET, KABUR DARI PLAYER ");
+            } else if (getDistanceBetween(neareestGasCloud.get(0), bot) < 4*bot.getSize()){
                 heading = GetOppositeDirection(neareestGasCloud.get(0), bot);
+                target = fixfood;
+                System.out.println("TEST NGEHINDAR GAS CLOUD MASIH JAUH ");
+            }
+            else{
+                heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
                 target = fixfood;
                 System.out.println("TEST NGEHINDAR GAS CLOUD ");
             }
             
         }
-
+        System.out.println("RETURN RESOLVE : " + heading);
         if(target == worldCenter){
             heading = getHeadingBetween(fixfood);
         }
-
+        System.out.println("RETURN RESOLVE : " + heading);
         return heading;
     }
 
@@ -285,7 +316,10 @@ public class BotService {
 
     private int GetOppositeDirection2(GameObject gameObject1, GameObject gameObject2)
     {
-        return toDegrees2(Math.atan2(gameObject2.getPosition().y - gameObject1.getPosition().y, gameObject2.getPosition().x - gameObject1.getPosition().x));
+        if(count > 1){
+            udah = true;
+        }
+        return toDegrees2(Math.atan2(gameObject2.getPosition().y - gameObject1.getPosition().y, gameObject2.getPosition().x - gameObject1.getPosition().x), udah);
     }
 
 }
