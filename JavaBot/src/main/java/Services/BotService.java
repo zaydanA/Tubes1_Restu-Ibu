@@ -141,7 +141,7 @@ public class BotService {
     }
 
     private int toDegrees2(double v) {
-        return (int) (v * (180 / Math.PI) + 30);
+        return (int) (v * (180 / Math.PI) + 90);
     }
 
     private int resolveNewTarget()
@@ -195,12 +195,18 @@ public class BotService {
 
             //bot kita lebih kecil
             if(nearestPlayer.get(0).getSize() > bot.getSize()){
-                if(getDistanceBetween(nearestPlayer.get(0), bot) < (7*nearestPlayer.get(0).getSize())){
+                System.out.println("=====");
+                System.out.println(("UKURAN TARGET : " + nearestPlayer.get(0).getSize()));
+                System.out.println(("UKURAN BOT : " + bot.getSize()));
+                System.out.println(("JARAK TARGET DENGAN TEST : " + getDistanceBetween(nearestPlayer.get(0), bot)));
+                System.out.println("=====");
+                if(getDistanceBetween(nearestPlayer.get(0), bot) < (2*nearestPlayer.get(0).getSize())){
                     System.out.println("TEST BOT KABUR");
-                    heading = GetOppositeDirection(target, bot);
+                    heading = GetOppositeDirection(nearestPlayer.get(0), bot);
                     // heading = direction2NearestFood;
                     targetIsPlayer = false;
-                } else {
+                }
+                else {
                     heading = getHeadingBetween(fixfood);
                     target = fixfood;
                     targetIsPlayer = false;
