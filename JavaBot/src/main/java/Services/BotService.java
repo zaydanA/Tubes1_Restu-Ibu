@@ -89,24 +89,23 @@ public class BotService {
                     }
                 }
             }
-            playerAction.heading = heading;
+            // playerAction.heading = heading;
+        
             GameObject worldC= new GameObject(null, null, null, null, gameState.world.getCenterPoint(), null);
-            if(worldC.getPosition() != null){
-                var distanceFromWorldCenter = getDistanceBetween(bot, worldC);
-                if (distanceFromWorldCenter + (1.5 * bot.getSize()) > gameState.world.getRadius()){
-                    worldCenter=new GameObject(null, null, null, null, new Position(0, 0), null);
-                    heading = getHeadingBetween(worldCenter);
-                    target = worldCenter;
-                    System.out.println("BOT AVOIDING VOID, MOVING TO CENTER");
+            var distanceFromWorldCenter = getDistanceBetween(bot, worldC);
+            if (distanceFromWorldCenter + (1.5 * bot.getSize()) > gameState.world.getRadius()){
+                worldCenter=new GameObject(null, null, null, null, new Position(0, 0), null);
+                heading = getHeadingBetween(worldCenter);
+                target = worldCenter;
+                System.out.println("BOT AVOIDING VOID, MOVING TO CENTER");
                 }
-            }
 
             if (targetIsPlayer)
             {
                 System.out.println("Firing Torpedoes at target");
                 // playerAction.action = PlayerActions.FIRETORPEDOES;
             }
-            
+            playerAction.heading = heading;
             System.out.println("TEST BOT ACTION : " + playerAction.action + " : " + playerAction.heading);
             this.playerAction = playerAction;
         }
@@ -141,13 +140,19 @@ public class BotService {
         return (int) (v * (180 / Math.PI));
     }
 
+    private int toDegrees2(double v) {
+        return (int) (v * (180 / Math.PI) + 30);
+    }
+
     private int resolveNewTarget()
     {
         int heading;
-        List<GameObject> nearestFood2;
+        GameObject fixfood;
         var nearestFood = gameState.getGameObjects().stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD).sorted(Comparator.comparing(item -> getDistanceBetween(bot, item))).collect(Collectors.toList());
+        var nearestSuperFood = gameState.getGameObjects().stream().filter(superfood -> superfood.getGameObjectType() == ObjectTypes.SUPERFOOD).sorted(Comparator.comparing(superfood -> getDistanceBetween(bot, superfood))).collect(Collectors.toList());
         // var nearestFood1 = gameState.getGameObjects().stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD).collect(Collectors.toList());
         var nearestPlayer = gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
+        var neareestGasCloud = gameState.getGameObjects().stream().filter(gascloud -> gascloud.getGameObjectType() == ObjectTypes.GASCLOUD).sorted(Comparator.comparing(gascloud -> getDistanceBetween(bot, gascloud))).collect(Collectors.toList());
 
         // if(!nearestPlayer.isEmpty()){
         //     var direction2NearestPlayer = getHeadingBetween(nearestPlayer.get(0));
@@ -177,52 +182,73 @@ public class BotService {
             System.out.println("Wa a a a");
         }
         var direction2NearestPlayer = getHeadingBetween(nearestPlayer.get(0));
-        
+        var direction2NearestSuperFood = getHeadingBetween((nearestSuperFood.get(0)));
         var direction2NearestFood = getHeadingBetween(nearestFood.get(0));
-        
-        
-        if(nearestPlayer.get(0).getSize() > bot.getSize()){
-            if(getDistanceBetween(target, bot) < (24*nearestPlayer.get(0).getSize())){
-                System.out.println("TEST BOT KABUR");
-                heading = GetOppositeDirection(target, bot);
-                // heading = direction2NearestFood;
-                targetIsPlayer = false;
-            } else {
-                heading = direction2NearestFood;
-                target = nearestFood.get(0);
+
+        if(getDistanceBetween(nearestFood.get(0), bot) < 0.8*getDistanceBetween(nearestSuperFood.get(0), bot)){
+            fixfood = nearestFood.get(0);
+        } else {
+            fixfood = nearestSuperFood.get(0);
+        }
+
+        if(getDistanceBetween(fixfood, bot) < getDistanceBetween(neareestGasCloud.get(0), bot)){
+
+            //bot kita lebih kecil
+            if(nearestPlayer.get(0).getSize() > bot.getSize()){
+                if(getDistanceBetween(nearestPlayer.get(0), bot) < (7*nearestPlayer.get(0).getSize())){
+                    System.out.println("TEST BOT KABUR");
+                    heading = GetOppositeDirection(target, bot);
+                    // heading = direction2NearestFood;
+                    targetIsPlayer = false;
+                } else {
+                    heading = getHeadingBetween(fixfood);
+                    target = fixfood;
+                    targetIsPlayer = false;
+                    System.out.println("TEST BOT GOING FOR FEEDING");
+                }
+                
+            }
+            //bot kita lebih gede
+            else if (3*nearestPlayer.get(0).getSize() < bot.getSize()){
+                if(getDistanceBetween(target, bot) < (3*bot.getSize())){
+                    heading = direction2NearestPlayer;
+                    target = nearestPlayer.get(0);
+                    targetIsPlayer = true;
+                    System.out.println("TEST BOT CHASING SMALLER PLAYER");
+                }else {
+                    heading = getHeadingBetween(fixfood);
+                    target = fixfood;
+                    targetIsPlayer = false;
+                    System.out.println("TEST BOT GOING FOR FEEDING");
+                }
+            }
+            else if(fixfood != null){
+                heading = getHeadingBetween(fixfood);
+                target = fixfood;
                 targetIsPlayer = false;
                 System.out.println("TEST BOT GOING FOR FEEDING");
+            }
+            else{
+                target = fixfood;
+                heading = getHeadingBetween(worldCenter);
+                targetIsPlayer = false;
+                System.out.println("TEST BOT COULDNT FIND ANYTHING");
+            }
+        } else{
+            if (getDistanceBetween(nearestPlayer.get(0), bot) < (3*nearestPlayer.get(0).getSize())){
+                heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
+                target = fixfood;
+                System.out.println("TEST NGEHINDAR GAS CLOUD ");
+            } else{
+                heading = GetOppositeDirection(neareestGasCloud.get(0), bot);
+                target = fixfood;
+                System.out.println("TEST NGEHINDAR GAS CLOUD ");
             }
             
         }
-        else if (nearestPlayer.get(0).getSize() < bot.getSize()){
-            if(getDistanceBetween(target, bot) <= (3*bot.getSize())){
-                heading = direction2NearestPlayer;
-                target = nearestPlayer.get(0);
-                targetIsPlayer = true;
-                System.out.println("TEST BOT CHASING SMALLER PLAYER");
-            }else {
-                heading = direction2NearestFood;
-                target = nearestFood.get(0);
-                targetIsPlayer = false;
-                System.out.println("TEST BOT GOING FOR FEEDING");
-            }
-        }
-        else if(nearestFood.get(0) != null){
-            heading = direction2NearestFood;
-            target = nearestFood.get(0);
-            targetIsPlayer = false;
-            System.out.println("TEST BOT GOING FOR FEEDING");
-        }
-        else{
-            target = worldCenter;
-            heading = getHeadingBetween(worldCenter);
-            targetIsPlayer = false;
-            System.out.println("TEST BOT COULDNT FIND ANYTHING");
-        }
 
         if(target == worldCenter){
-            heading = direction2NearestFood;
+            heading = getHeadingBetween(fixfood);
         }
 
         return heading;
@@ -249,6 +275,11 @@ public class BotService {
     private int GetOppositeDirection(GameObject gameObject1, GameObject gameObject2)
     {
         return toDegrees(Math.atan2(gameObject2.getPosition().y - gameObject1.getPosition().y, gameObject2.getPosition().x - gameObject1.getPosition().x));
+    }
+
+    private int GetOppositeDirection2(GameObject gameObject1, GameObject gameObject2)
+    {
+        return toDegrees2(Math.atan2(gameObject2.getPosition().y - gameObject1.getPosition().y, gameObject2.getPosition().x - gameObject1.getPosition().x));
     }
 
 }
