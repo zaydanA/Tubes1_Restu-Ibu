@@ -15,6 +15,8 @@ public class BotService {
     private boolean targetIsPlayer = false; 
     private GameObject worldCenter;
     private boolean udah=false;
+    private int kejepitctr = 0;
+    private boolean udah1=false;
     private int count=0;
 
 
@@ -43,6 +45,8 @@ public class BotService {
     public void computeNextPlayerAction(PlayerAction playerAction) {
         var heading = 90;
         playerAction.action = PlayerActions.FORWARD;
+
+        var nearestPlayer = gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
         // playerAction.heading = new Random().nextInt(360);
 
         // if (!gameState.getGameObjects().isEmpty()) {
@@ -64,16 +68,13 @@ public class BotService {
             if(target == null || target == worldCenter)
             {
                 System.out.println("NO CURRENT TARGET FOR TEST BOT");
-                var nearestPlayer = gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
-                if(!nearestPlayer.isEmpty()){
-                }
                 heading = resolveNewTarget();
             }
             else
             {
-                var targetWithNewValues = gameState.getPlayerGameObjects().stream().filter(go -> go.id != target.id).collect(Collectors.toList());
-                
-                if(targetWithNewValues == null){
+                var targetWithNewValues = gameState.getPlayerGameObjects().stream().filter(go -> go.id == target.id).collect(Collectors.toList()) == null ? gameState.getGameObjects().stream().filter(go -> go.id == target.id).collect(Collectors.toList()) : gameState.getPlayerGameObjects().stream().filter(go -> go.id == target.id).collect(Collectors.toList());
+                //var targetWithNewValues =  gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
+                if(targetWithNewValues == null || targetWithNewValues.isEmpty()){
                     System.out.println("OLD TARGET INVALID, TEST BOT RESOLVING NEW TARGET");
                     heading = resolveNewTarget();
                 }
@@ -81,9 +82,10 @@ public class BotService {
                     System.out.println("PREVIOUS TARGET EXIST, TEST BOT UPDATING RESOLUTION");
                     target = targetWithNewValues.get(0);
 
-                    if(target.size < bot.getSize()){
+                    if(1.25*target.size < bot.getSize()){
                         heading = getHeadingBetween(target);
                         System.out.println("TARGET IS SMALLER THAN TEST BOT");
+                        
                     }
                     else{
                         System.out.println("PREVIOUS TARGET LARGER, TEST BOT RESOLVING NEW TARGET");
@@ -97,16 +99,37 @@ public class BotService {
             var distanceFromWorldCenter = getDistanceBetween(bot, worldC);
             if (distanceFromWorldCenter + (1.5 * bot.getSize()) > gameState.world.getRadius()){
                 worldCenter=new GameObject(null, null, null, null, new Position(0, 0), null);
-                heading = getHeadingBetween(worldCenter);
+                // heading = getHeadingBetween(worldCenter);
+                heading = getHeadingBetween(worldC);
                 target = worldCenter;
                 System.out.println("BOT AVOIDING VOID, MOVING TO CENTER");
+                //udah1 = true;
+                count++;
                 }
 
             if (targetIsPlayer)
             {
                 System.out.println("FIRING TORPEDOES AT TARGET");
+                heading=getHeadingBetween(nearestPlayer.get(0));
                 playerAction.action = PlayerActions.FIRETORPEDOES;
             }
+
+            if(kejepitctr > 10){
+                heading = getHeadingBetween(worldC) - 90;
+                System.out.println("KEJEPIT ANJINGGGG yang pertama");
+                // kejepitctr = 0;
+            }
+            // } else if(kejepitctr > 5){
+            //     heading = getHeadingBetween(worldC) + 90;
+            //     System.out.println("KEJEPIT ANJINGGGG yang kedua");
+            // }
+
+            if(kejepitctr > 40){
+                // heading = getHeadingBetween(worldC);
+                heading = resolveNewTarget();
+                kejepitctr = 0;
+            }
+
             System.out.println("INI HEADING : " + heading);
             playerAction.heading = heading;
             System.out.println("TEST BOT ACTION : " + playerAction.action + " : " + playerAction.heading);
@@ -164,37 +187,12 @@ public class BotService {
         // var nearestFood1 = gameState.getGameObjects().stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD).collect(Collectors.toList());
         var nearestPlayer = gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
         var neareestGasCloud = gameState.getGameObjects().stream().filter(gascloud -> gascloud.getGameObjectType() == ObjectTypes.GASCLOUD).sorted(Comparator.comparing(gascloud -> getDistanceBetween(bot, gascloud))).collect(Collectors.toList());
-
-        // if(!nearestPlayer.isEmpty()){
-        //     var direction2NearestPlayer = getHeadingBetween(nearestPlayer.get(0));
-        //     System.out.println(direction2NearestPlayer);
-        //     System.out.println("PEMBATAS PLAYER");
-        // }
-        // if(!nearestFood.isEmpty()){
-        //     var direction2NearestFood = getHeadingBetween(nearestFood.get(0));
-        //     System.out.println(direction2NearestFood);
-        //     System.out.println("PEMBATAS FOOD");
-        // }
-        // var direction2NearestPlayer = nearestPlayer.isEmpty() ? null : getHeadingBetween(nearestPlayer.get(0));
-        // var direction2NearestFood = nearestFood.isEmpty() ? null : getHeadingBetween(nearestFood.get(0));
-        
-        // for(int i=0; i<nearestFood1.size(); i++){
-        //     nearestFood2 = gameState.getGameObjects().stream().filter(item2 -> item2.getGameObjectType() == ObjectTypes.FOOD).sorted(Comparator.comparing(item2 -> getDistanceBetween(nearestFood1.get(i), item2))).collect(Collectors.toList());
-
-        //     for(int j=0; j<nearestFood2.size(); j++){
-                
-        //     }
-
-        // }
-
-            
+        //var nearestAsteroid = gameState.getGameObjects().stream().filter(asteroid -> asteroid.getGameObjectType() == ObjectTypes.ASTEROIDFIELD).sorted(Comparator.comparing(asteroid -> getDistanceBetween(bot, asteroid))).collect(Collectors.toList());          
 
         if(nearestPlayer.isEmpty()){
             System.out.println("Wa a a a");
         }
         var direction2NearestPlayer = getHeadingBetween(nearestPlayer.get(0));
-        var direction2NearestSuperFood = getHeadingBetween((nearestSuperFood.get(0)));
-        var direction2NearestFood = getHeadingBetween(nearestFood.get(0));
 
         if(getDistanceBetween(nearestFood.get(0), bot) < 0.8*getDistanceBetween(nearestSuperFood.get(0), bot)){
             fixfood = nearestFood.get(0);
@@ -205,46 +203,64 @@ public class BotService {
         if(getDistanceBetween(fixfood, bot) < getDistanceBetween(neareestGasCloud.get(0), bot)){
 
             //bot kita lebih kecil
-            if(nearestPlayer.get(0).getSize() >= bot.getSize()){
+            if(nearestPlayer.get(0).getSize() > bot.getSize()){
                 System.out.println("=====");
                 System.out.println(("UKURAN TARGET : " + nearestPlayer.get(0).getSize()));
                 System.out.println(("UKURAN BOT : " + bot.getSize()));
                 System.out.println(("JARAK TARGET DENGAN TEST : " + getDistanceBetween(nearestPlayer.get(0), bot)));
                 System.out.println("=====");
+
+                int dangerzone = 0;
+
+                if (nearestPlayer.get(0).getSize() > 150){
+                    dangerzone = 2*nearestPlayer.get(0).getSize();
+                } else if (nearestPlayer.get(0).getSize() > 75){
+                    dangerzone = 4*nearestPlayer.get(0).getSize();
+                } else if (nearestPlayer.get(0).getSize() > 0){
+                    dangerzone = 6*nearestPlayer.get(0).getSize();
+                }
                 
-                if(getDistanceBetween(nearestPlayer.get(0), bot) < (8*bot.getSize())){
+                if(getDistanceBetween(nearestPlayer.get(0), bot) < dangerzone){
                     udah = false;
                     System.out.println("TEST BOT KABUR");
                     heading = GetOppositeDirection(nearestPlayer.get(0), bot);
                     target = fixfood;
-                    
+                    System.out.println("MUSUH HEADING KE : " + nearestPlayer.get(0).currentHeading);
 
                     // heading = direction2NearestFood;
-                    targetIsPlayer = false;
+                    if (nearestPlayer.get(0).getSize()<5*bot.getSize()){
+                        targetIsPlayer=true;
+                    }else{
+
+                        targetIsPlayer = false;
+                    }
                     System.out.println("INI OPPOSITE DIKEJAR" + heading);
-                    count++;
+                    //count++;
                 }
                 else {
                     heading = getHeadingBetween(fixfood);
                     target = fixfood;
                     targetIsPlayer = false;
                     System.out.println("TEST BOT GOING FOR FEEDING");
+                    kejepitctr = 0;
                 }
                 
             }
             
             //bot kita lebih gede
-            else if (2*nearestPlayer.get(0).getSize() < bot.getSize()){
+            else if (nearestPlayer.get(0).getSize() < 1.25*bot.getSize()){
                 udah = false;
+                udah1 = false;
                 if(getDistanceBetween(neareestGasCloud.get(0), bot) < 4*bot.getSize()){
                     heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
                     System.out.println("TEST BOT CHASING TARGET BUT GAS CLOUD");
                 }
                 else{
-                    if(getDistanceBetween(target, bot) < (3*bot.getSize())){
+                    if(getDistanceBetween(nearestPlayer.get(0), bot) < (4*bot.getSize())){
                         heading = direction2NearestPlayer;
                         target = nearestPlayer.get(0);
-                        targetIsPlayer = true;
+                        if(getDistanceBetween(nearestPlayer.get(0), bot) < 4 * bot.getSize())
+                            targetIsPlayer = true;
                         System.out.println("TEST BOT CHASING SMALLER PLAYER");
                     }else {
                         heading = getHeadingBetween(fixfood);
@@ -252,6 +268,7 @@ public class BotService {
                         targetIsPlayer = false;
                         System.out.println("TEST BOT GOING FOR FEEDING");
                     }
+                    kejepitctr = 0;
                 }
             }
             else if(fixfood != null){
@@ -259,28 +276,32 @@ public class BotService {
                 target = fixfood;
                 targetIsPlayer = false;
                 System.out.println("TEST BOT GOING FOR FEEDING");
+                kejepitctr = 0;
             }
             else{
                 target = fixfood;
-                heading = getHeadingBetween(worldCenter);
+                // heading = getHeadingBetween(worldCenter);
+                heading = getHeadingBetween(fixfood);
                 targetIsPlayer = false;
                 System.out.println("TEST BOT COULDNT FIND ANYTHING");
+                kejepitctr = 0;
             }
         } else{//ini tiati
             if (getDistanceBetween(nearestPlayer.get(0), bot) < (8*bot.getSize())){
                 heading = GetOppositeDirection2(nearestPlayer.get(0), bot);
                 target = fixfood;
-                System.out.println("ADA GAS CLOUD TAPI ADA TARGET, KABUR DARI PLAYER ");
+                System.out.println("ADA GAS CLOUD / ASTEROIDTAPI ADA TARGET, KABUR DARI PLAYER ");
             } else if (getDistanceBetween(neareestGasCloud.get(0), bot) < 4*bot.getSize()){
-                heading = GetOppositeDirection(neareestGasCloud.get(0), bot);
+                heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
                 target = fixfood;
-                System.out.println("TEST NGEHINDAR GAS CLOUD MASIH JAUH ");
+                System.out.println("TEST NGEHINDAR GAS CLOUD / ASTEROID MASIH JAUH ");
             }
             else{
                 heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
                 target = fixfood;
-                System.out.println("TEST NGEHINDAR GAS CLOUD ");
+                System.out.println("TEST NGEHINDAR GAS CLOUD / ASTEROID");
             }
+            count++;
             
         }
         System.out.println("RETURN RESOLVE : " + heading);
