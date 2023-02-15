@@ -110,8 +110,10 @@ public class BotService {
             if (targetIsPlayer)
             {
                 System.out.println("FIRING TORPEDOES AT TARGET");
+                // System.out.println("FIRING TELEPORT AT TARGET");
                 heading=getHeadingBetween(nearestPlayer.get(0));
                 playerAction.action = PlayerActions.FIRETORPEDOES;
+                // playerAction.action=PlayerActions.FIRE_TELEPORT;
             }
 
             if(kejepitctr > 10){
@@ -132,6 +134,7 @@ public class BotService {
 
             System.out.println("INI HEADING : " + heading);
             playerAction.heading = heading;
+
             System.out.println("TEST BOT ACTION : " + playerAction.action + " : " + playerAction.heading);
             this.playerAction = playerAction;
         }
@@ -251,7 +254,7 @@ public class BotService {
             else if (nearestPlayer.get(0).getSize() < 1.25*bot.getSize()){
                 udah = false;
                 udah1 = false;
-                if(getDistanceBetween(neareestGasCloud.get(0), bot) < 4*bot.getSize()){
+                if(getDistanceBetween(neareestGasCloud.get(0), bot) < 3*bot.getSize()){
                     heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
                     System.out.println("TEST BOT CHASING TARGET BUT GAS CLOUD");
                 }
@@ -259,7 +262,7 @@ public class BotService {
                     if(getDistanceBetween(nearestPlayer.get(0), bot) < (4*bot.getSize())){
                         heading = direction2NearestPlayer;
                         target = nearestPlayer.get(0);
-                        if(getDistanceBetween(nearestPlayer.get(0), bot) < 4 * bot.getSize())
+                        if(getDistanceBetween(nearestPlayer.get(0), bot) < 5 * bot.getSize())
                             targetIsPlayer = true;
                         System.out.println("TEST BOT CHASING SMALLER PLAYER");
                     }else {
@@ -291,7 +294,7 @@ public class BotService {
                 heading = GetOppositeDirection2(nearestPlayer.get(0), bot);
                 target = fixfood;
                 System.out.println("ADA GAS CLOUD / ASTEROIDTAPI ADA TARGET, KABUR DARI PLAYER ");
-            } else if (getDistanceBetween(neareestGasCloud.get(0), bot) < 4*bot.getSize()){
+            } else if (getDistanceBetween(neareestGasCloud.get(0), bot) < 3*bot.getSize()){
                 heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
                 target = fixfood;
                 System.out.println("TEST NGEHINDAR GAS CLOUD / ASTEROID MASIH JAUH ");
