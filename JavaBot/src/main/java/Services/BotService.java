@@ -16,8 +16,9 @@ public class BotService {
     private GameObject worldCenter;
     private boolean udah=false;
     private int kejepitctr = 0;
-    private boolean udah1=false;
+    private boolean nembaktele=false;
     private int count=0;
+    private int temptick;
 
 
     public BotService() {
@@ -63,7 +64,8 @@ public class BotService {
         //     this.playerAction = playerAction;
         // }
 
-        //System.out.println("TEST BOT ACTION : " + playerAction.action + " : " + playerAction.heading);
+        //System.out.println("TEST BOT ACTION : " + playerAction.action + " : " + playerAction.heading);s
+        System.out.println("KEJEPIT MAS :" + kejepitctr);
         if(!gameState.getGameObjects().isEmpty()){
             if(target == null || target == worldCenter)
             {
@@ -77,6 +79,11 @@ public class BotService {
                 if(targetWithNewValues == null || targetWithNewValues.isEmpty()){
                     System.out.println("OLD TARGET INVALID, TEST BOT RESOLVING NEW TARGET");
                     heading = resolveNewTarget();
+                    if(targetWithNewValues == null){
+                        System.out.println("TARGET WITH NEW VALUES NULL");
+                    }else{
+                        System.out.println("TARGET WITH NEW VALUES EMPTY");
+                    }
                 }
                 else{
                     System.out.println("PREVIOUS TARGET EXIST, TEST BOT UPDATING RESOLUTION");
@@ -105,6 +112,7 @@ public class BotService {
                 System.out.println("BOT AVOIDING VOID, MOVING TO CENTER");
                 //udah1 = true;
                 count++;
+                kejepitctr++;
                 }
 
             if (targetIsPlayer)
@@ -117,7 +125,7 @@ public class BotService {
             }
 
             if(kejepitctr > 10){
-                heading = getHeadingBetween(worldC) - 90;
+                heading = getHeadingBetween(worldC) + 90;
                 System.out.println("KEJEPIT ANJINGGGG yang pertama");
                 // kejepitctr = 0;
             }
@@ -126,11 +134,22 @@ public class BotService {
             //     System.out.println("KEJEPIT ANJINGGGG yang kedua");
             // }
 
-            if(kejepitctr > 40){
-                // heading = getHeadingBetween(worldC);
-                heading = resolveNewTarget();
+            if(kejepitctr > 20){
+                heading = getHeadingBetween(worldC);
+                // heading = resolveNewTarget();
+                temptick = gameState.world.getCurrentTick() + 10;
+                playerAction.action = PlayerActions.FIRETELEPORT;
+                nembaktele = true;
                 kejepitctr = 0;
             }
+
+            if(temptick == gameState.world.getCurrentTick()){
+                System.out.println("BOT TELEPORT ANJING");
+                playerAction.action = PlayerActions.TELEPORT;
+                temptick = 0;
+                nembaktele = false;
+            }
+
 
             System.out.println("INI HEADING : " + heading);
             playerAction.heading = heading;
@@ -203,7 +222,7 @@ public class BotService {
             fixfood = nearestSuperFood.get(0);
         }
 
-        if(getDistanceBetween(fixfood, bot) < getDistanceBetween(neareestGasCloud.get(0), bot)){
+        if(getDistanceBetween(fixfood, bot) < getDistanceBetween(neareestGasCloud.get(0), bot) || (getDistanceBetween(nearestPlayer.get(0), bot) < getDistanceBetween(neareestGasCloud.get(0), bot))){
 
             //bot kita lebih kecil
             if(nearestPlayer.get(0).getSize() > bot.getSize()){
@@ -239,13 +258,14 @@ public class BotService {
                     }
                     System.out.println("INI OPPOSITE DIKEJAR" + heading);
                     //count++;
+                    // kejepitctr++;
                 }
                 else {
                     heading = getHeadingBetween(fixfood);
                     target = fixfood;
                     targetIsPlayer = false;
-                    System.out.println("TEST BOT GOING FOR FEEDING");
-                    kejepitctr = 0;
+                    System.out.println("TEST BOT GOING FOR FEEDING 1");
+                    // kejepitctr = 0;
                 }
                 
             }
@@ -253,7 +273,7 @@ public class BotService {
             //bot kita lebih gede
             else if (nearestPlayer.get(0).getSize() < 1.25*bot.getSize()){
                 udah = false;
-                udah1 = false;
+                // udah1 = false;
                 if(getDistanceBetween(neareestGasCloud.get(0), bot) < 3*bot.getSize()){
                     heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
                     System.out.println("TEST BOT CHASING TARGET BUT GAS CLOUD");
@@ -269,47 +289,63 @@ public class BotService {
                         heading = getHeadingBetween(fixfood);
                         target = fixfood;
                         targetIsPlayer = false;
-                        System.out.println("TEST BOT GOING FOR FEEDING");
+                        System.out.println("TEST BOT GOING FOR FEEDING 2");
+                        // kejepitctr = 0;
                     }
-                    kejepitctr = 0;
                 }
             }
             else if(fixfood != null){
                 heading = getHeadingBetween(fixfood);
                 target = fixfood;
                 targetIsPlayer = false;
-                System.out.println("TEST BOT GOING FOR FEEDING");
-                kejepitctr = 0;
+                System.out.println("TEST BOT GOING FOR FEEDING 3");
+                // kejepitctr = 0;
             }
             else{
-                target = fixfood;
+                target = nearestPlayer.get(0);
                 // heading = getHeadingBetween(worldCenter);
-                heading = getHeadingBetween(fixfood);
+                GameObject worldC2= new GameObject(null, null, null, null, gameState.world.getCenterPoint(), null);
+                heading = getHeadingBetween(worldC2);
                 targetIsPlayer = false;
-                System.out.println("TEST BOT COULDNT FIND ANYTHING");
-                kejepitctr = 0;
+                System.out.println("TEST BOT COULDNT FIND ANYTHING 4");
+                // kejepitctr = 0;
             }
-        } else{//ini tiati
-            if (getDistanceBetween(nearestPlayer.get(0), bot) < (8*bot.getSize())){
+        } else{//ini gascloud 
+            int dangerzone1 = 0;
+            double dangerzone2 = 0;
+
+            if (nearestPlayer.get(0).getSize() > 150){
+                dangerzone1 = 2*bot.getSize();
+                dangerzone2 = 0.5*bot.getSize();
+            } else if (nearestPlayer.get(0).getSize() > 75){
+                dangerzone1 = 4*bot.getSize();
+                dangerzone2 = 1.5*bot.getSize();
+            } else if (nearestPlayer.get(0).getSize() > 0){
+                dangerzone1 = 8*bot.getSize();
+                dangerzone2 = 3*bot.getSize();
+            }
+            if (getDistanceBetween(nearestPlayer.get(0), bot) < (dangerzone1)){ //8*botsize
                 heading = GetOppositeDirection2(nearestPlayer.get(0), bot);
                 target = fixfood;
                 System.out.println("ADA GAS CLOUD / ASTEROIDTAPI ADA TARGET, KABUR DARI PLAYER ");
-            } else if (getDistanceBetween(neareestGasCloud.get(0), bot) < 3*bot.getSize()){
+            } else if (getDistanceBetween(neareestGasCloud.get(0), bot) < dangerzone2){
                 heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
                 target = fixfood;
                 System.out.println("TEST NGEHINDAR GAS CLOUD / ASTEROID MASIH JAUH ");
             }
             else{
                 heading = GetOppositeDirection2(neareestGasCloud.get(0), bot);
-                target = fixfood;
+                target = nearestPlayer.get(0);
                 System.out.println("TEST NGEHINDAR GAS CLOUD / ASTEROID");
+                // kejepitctr++;
             }
             count++;
             
         }
         System.out.println("RETURN RESOLVE : " + heading);
         if(target == worldCenter){
-            heading = getHeadingBetween(fixfood);
+            
+            heading = getHeadingBetween(fixfood) ;
         }
         System.out.println("RETURN RESOLVE : " + heading);
         return heading;
