@@ -8,6 +8,7 @@
 ## Table of Contents
 * [General Info](#general-information)
 * [Requirement](#requirement)
+* [Usage](#usage)
 * [Author](#author)
 
 ## General Information
@@ -19,6 +20,13 @@ Game ini dibuat dengan menggunakan **Algoritma Greedy**.
 - IntelliJ IDEA
 - NodeJS
 - .Net Core 3.1
+
+## Usage
+* Pastikan file konfigurasi sudah sesuai dengan folder bot yang ingin dijalankan 
+* Untuk pengguna windows, jalankan program dengan membuka file run.bat dan menjalankannya dengan mengetikkan ./run pada terminal sedangkan untuk pengguna macOs dan linux dapat mengetikkan perintah make run di terminal.
+* Akan terdapat console log
+* Jalankan game pada catatan historis console log 
+
 
 ## Author
 - 13521072, Irsyad Nurwidianto Basuki
