@@ -2,6 +2,7 @@ package Services;
 
 import Enums.*;
 import Models.*;
+import io.reactivex.internal.schedulers.NewThreadScheduler;
 
 import java.util.*;
 import java.util.stream.*;
@@ -19,6 +20,10 @@ public class BotService {
     private boolean nembaktele=false;
     private int count=0;
     private int temptick;
+    private boolean teletarget;
+    private boolean teletarget1=false;
+    private GameObject telekita;
+    private int telectr =0;
 
 
     public BotService() {
@@ -44,27 +49,18 @@ public class BotService {
     }
 
     public void computeNextPlayerAction(PlayerAction playerAction) {
+        System.out.println();
+        System.out.println();
+        System.out.println("UKURAN BOT : " + bot.getSize());
+        System.out.println();
+
         var heading = 90;
         playerAction.action = PlayerActions.FORWARD;
-
         var nearestPlayer = gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
-        // playerAction.heading = new Random().nextInt(360);
+        var teleporter = gameState.getGameObjects().stream().filter(tele -> tele.getGameObjectType() == ObjectTypes.TELEPORTER).sorted(Comparator.comparing(tele -> getDistanceBetween(bot, tele))).collect(Collectors.toList());
+        System.out.println("TELEPORTER ============" + teleporter);
 
-        // if (!gameState.getGameObjects().isEmpty()) {
-        //     var foodList = gameState.getGameObjects().stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD).sorted(Comparator.comparing(item -> getDistanceBetween(bot, item))).collect(Collectors.toList());
-            
-        //     var nearestPlayer = gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
-        //     // if(!nearestPlayer.isEmpty()){
-        //     //      System.out.println(nearestPlayer.get(0));
-        //     // }
-        //     // if(!nearestPlayer.isEmpty()){
-        //     //     playerAction.heading = getHeadingBetween(foodList.get(0));
-        //     // }
-        //     playerAction.heading = 90;
-        //     this.playerAction = playerAction;
-        // }
 
-        //System.out.println("TEST BOT ACTION : " + playerAction.action + " : " + playerAction.heading);s
         System.out.println("KEJEPIT MAS :" + kejepitctr);
         if(!gameState.getGameObjects().isEmpty()){
             if(target == null || target == worldCenter)
@@ -74,16 +70,16 @@ public class BotService {
             }
             else
             {
-                var targetWithNewValues = gameState.getPlayerGameObjects().stream().filter(go -> go.id == target.id).collect(Collectors.toList()) == null ? gameState.getGameObjects().stream().filter(go -> go.id == target.id).collect(Collectors.toList()) : gameState.getPlayerGameObjects().stream().filter(go -> go.id == target.id).collect(Collectors.toList());
-                //var targetWithNewValues =  gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
-                if(targetWithNewValues == null || targetWithNewValues.isEmpty()){
+                var targetWithNewValues = gameState.getPlayerGameObjects().stream().filter(go -> go.id == target.id).collect(Collectors.toList()).isEmpty() ? gameState.getGameObjects().stream().filter(go -> go.id == target.id).collect(Collectors.toList()) : gameState.getPlayerGameObjects().stream().filter(go -> go.id == target.id).collect(Collectors.toList());
+                // var targetWithNewValues =  gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
+                if(targetWithNewValues == null || targetWithNewValues.isEmpty()){//targetWithNewValues == null || targetWithNewValues.isEmpty()
                     System.out.println("OLD TARGET INVALID, TEST BOT RESOLVING NEW TARGET");
                     heading = resolveNewTarget();
-                    if(targetWithNewValues == null){
-                        System.out.println("TARGET WITH NEW VALUES NULL");
-                    }else{
-                        System.out.println("TARGET WITH NEW VALUES EMPTY");
-                    }
+                    // if(targetWithNewValues == null){
+                    //     System.out.println("TARGET WITH NEW VALUES NULL");
+                    // }else{
+                    //     System.out.println("TARGET WITH NEW VALUES EMPTY");
+                    // }
                 }
                 else{
                     System.out.println("PREVIOUS TARGET EXIST, TEST BOT UPDATING RESOLUTION");
@@ -92,6 +88,16 @@ public class BotService {
                     if(1.25*target.size < bot.getSize()){
                         heading = getHeadingBetween(target);
                         System.out.println("TARGET IS SMALLER THAN TEST BOT");
+                        teletarget = false;
+                        if(1.25*target.size < bot.getSize()){
+                            if(bot.getSize() > 50 && telectr > 80){
+                                System.out.println("NEMBAK TELEPORT ANJINGGGGGGGGGGGGGGGGGGG");
+                                playerAction.action = PlayerActions.FIRETELEPORT;
+                                // teleporter = gameState.getGameObjects().stream().filter(tele -> tele.getGameObjectType() == ObjectTypes.TELEPORTER).sorted(Comparator.comparing(tele -> getDistanceBetween(bot, tele))).collect(Collectors.toList());
+                                
+                                telectr = 0;
+                            }
+                        }
                         
                     }
                     else{
@@ -101,7 +107,11 @@ public class BotService {
                 }
             }
             // playerAction.heading = heading;
-        
+            if(!teleporter.isEmpty()){
+                telekita = teleporter.get(0);
+                teletarget = true;
+                System.out.println("TELETARGET ============ TRUE");
+            }
             GameObject worldC= new GameObject(null, null, null, null, gameState.world.getCenterPoint(), null);
             var distanceFromWorldCenter = getDistanceBetween(bot, worldC);
             if (distanceFromWorldCenter + (1.5 * bot.getSize()) > gameState.world.getRadius()){
@@ -150,10 +160,38 @@ public class BotService {
                 nembaktele = false;
             }
 
+           
+            if(teletarget1){
+                if(getDistanceBetween(telekita, nearestPlayer.get(0)) <= 75 + bot.getSize() / 2 && teletarget1){
+                    System.out.println();
+                    System.out.println();
+                    System.out.println();
+                    System.out.println("============");
+                    System.out.println("TELEPORT TO TARGET");
+                    System.out.println("TELEPORT TO TARGET");
+                    System.out.println("TELEPORT TO TARGET");
+                    System.out.println("TELEPORT TO TARGET");
+                    System.out.println("============");
+                    System.out.println();
+                    System.out.println();
+                    System.out.println();
+                    playerAction.action = PlayerActions.TELEPORT;
+                    teletarget1 = false;
+                    teletarget = false;
+                }
+            }
 
+            if(teletarget && bot.size > 50){
+                System.out.println("FIRING TELEPORT TO TARGET");
+                heading = getHeadingBetween(nearestPlayer.get(0));
+                playerAction.action = PlayerActions.FIRETELEPORT;
+                teletarget = false;
+                teletarget1 = true;
+            }
             System.out.println("INI HEADING : " + heading);
             playerAction.heading = heading;
-
+            System.out.println(telectr);
+            telectr++;
             System.out.println("TEST BOT ACTION : " + playerAction.action + " : " + playerAction.heading);
             this.playerAction = playerAction;
         }
@@ -209,6 +247,7 @@ public class BotService {
         // var nearestFood1 = gameState.getGameObjects().stream().filter(item -> item.getGameObjectType() == ObjectTypes.FOOD).collect(Collectors.toList());
         var nearestPlayer = gameState.getPlayerGameObjects().stream().filter(target -> target.id != bot.id).sorted(Comparator.comparing(target -> getDistanceBetween(bot, target))).collect(Collectors.toList());
         var neareestGasCloud = gameState.getGameObjects().stream().filter(gascloud -> gascloud.getGameObjectType() == ObjectTypes.GASCLOUD).sorted(Comparator.comparing(gascloud -> getDistanceBetween(bot, gascloud))).collect(Collectors.toList());
+        var zupernova = gameState.getGameObjects().stream().filter(supernova -> supernova.getGameObjectType() == ObjectTypes.SUPERNOVAPICKUP).collect(Collectors.toList());
         //var nearestAsteroid = gameState.getGameObjects().stream().filter(asteroid -> asteroid.getGameObjectType() == ObjectTypes.ASTEROIDFIELD).sorted(Comparator.comparing(asteroid -> getDistanceBetween(bot, asteroid))).collect(Collectors.toList());          
 
         if(nearestPlayer.isEmpty()){
@@ -232,14 +271,22 @@ public class BotService {
                 System.out.println(("JARAK TARGET DENGAN TEST : " + getDistanceBetween(nearestPlayer.get(0), bot)));
                 System.out.println("=====");
 
-                int dangerzone = 0;
+                double dangerzone = 0, zuperzone=0;
 
                 if (nearestPlayer.get(0).getSize() > 150){
-                    dangerzone = 2*nearestPlayer.get(0).getSize();
+                    dangerzone = 1.5*nearestPlayer.get(0).getSize();
                 } else if (nearestPlayer.get(0).getSize() > 75){
                     dangerzone = 4*nearestPlayer.get(0).getSize();
                 } else if (nearestPlayer.get(0).getSize() > 0){
                     dangerzone = 6*nearestPlayer.get(0).getSize();
+                }
+
+                if(bot.getSize() > 150){
+                    zuperzone = 2.5*bot.getSize();
+                } else if(bot.getSize() > 75){
+                    zuperzone = 5*bot.getSize();
+                } else if(bot.getSize() > 0){
+                    zuperzone = 7*bot.getSize();
                 }
                 
                 if(getDistanceBetween(nearestPlayer.get(0), bot) < dangerzone){
@@ -259,6 +306,13 @@ public class BotService {
                     System.out.println("INI OPPOSITE DIKEJAR" + heading);
                     //count++;
                     // kejepitctr++;
+                } else if(!zupernova.isEmpty() && getDistanceBetween(zupernova.get(0), bot) < zuperzone){
+                    heading = getHeadingBetween(zupernova.get(0));
+                    target = fixfood;
+                    targetIsPlayer = false;
+                    System.out.println("************************************");
+                    System.out.println("TEST BOT HEADING TO SUPER DUPER NOVA");
+                    System.out.println("************************************");
                 }
                 else {
                     heading = getHeadingBetween(fixfood);
